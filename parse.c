@@ -43,14 +43,14 @@ int parse_map(char *line, t_cub_data *data) {
     int new_size = data->map_height + 1;
 
     // Allocate memory for the new row
-    char **new_map = realloc(data->map, new_size * sizeof(char *));
+    char **new_map = ft_realloc(data->map, new_size * sizeof(char *));
     if (new_map == NULL) {
         return -1; // Memory allocation failed
     }
     data->map = new_map;
 
     // Duplicate the line and store it in the map
-    data->map[data->map_height] = strdup(line);
+    data->map[data->map_height] = ft_strdup(line);
     if (data->map[data->map_height] == NULL) {
         return -1; // Memory allocation failed
     }
@@ -59,7 +59,7 @@ int parse_map(char *line, t_cub_data *data) {
     data->map_height = new_size;
 
     // Optionally update map_width if this row is wider than the previous widest
-    int line_length = strlen(line);
+    int line_length = ft_strlen(line);
     if (line_length > data->map_width) {
         data->map_width = line_length;
     }
@@ -158,7 +158,6 @@ int parse_cub_file(char *file_path, t_cub_data *data) {
             }
         }
     }
-
     if (bytes_read == -1) {
         // Error reading file
         printf("Error reading file: %s\n", file_path);
