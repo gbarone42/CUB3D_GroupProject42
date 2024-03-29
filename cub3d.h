@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <fcntl.h> // For open
+#include <unistd.h> // For read, close
+#include <string.h> // For strlen, etc. - assuming allowed for basic string operations
+
+#define BUFFER_SIZE 1024
 
 /* Define the structure to store .cub file data */
 typedef struct s_cub_data {
