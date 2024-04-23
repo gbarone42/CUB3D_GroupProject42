@@ -93,28 +93,8 @@ int	parse_color(char **line, int *color)
 	return (0);
 }
 
-/**/
-// Dispatcher function to parse line details
-int	parse_details(char *line, t_cub_data *data)
+int	parse_details2(const char *token, char **line, t_cub_data *data)
 {
-	static const char *directions[] = {"NO", "SO", "WE", "EA"};
-	static const int dir_index[] = {NORTH, SOUTH, WEST, EAST};
-	char *token;
-	int index;
-
-	index = 0;
-	token = next_token(&line);
-	while (index < 4) {
-		if (strcmp(token, directions[index]) == 0) {
-			if (data->is_set[dir_index[index]]) {
-				printf("Error: %s texture path already set.\n", directions[index]);
-				return (-1);
-			}
-			data->is_set[dir_index[index]] = true;
-			return (parse_texture_path(&line, data, directions[index]));
-		}
-		index++;
-	}
 	if (strcmp(token, "F") == 0)
 	{
 		if (data->is_set[4])
@@ -123,7 +103,7 @@ int	parse_details(char *line, t_cub_data *data)
 			return (-1);
 		}
 		data->is_set[4] = true;
-		return (parse_color(&line, &data->floor_color));
+		return (parse_color(line, &data->floor_color));
 	}
 	else if (strcmp(token, "C") == 0)
 	{
@@ -133,10 +113,36 @@ int	parse_details(char *line, t_cub_data *data)
 			return (-1);
 		}
 		data->is_set[5] = true;
-		return (parse_color(&line, &data->ceiling_color));
+		return (parse_color(line, &data->ceiling_color));
 	}
 	printf("Error: Unrecognized line format.\n");
 	return (-1);
+}
+
+int	parse_details(char *line, t_cub_data *data)
+{
+	static const char	*directions[] = {"NO", "SO", "WE", "EA"};
+	static const int	dir_index[] = {NORTH, SOUTH, WEST, EAST};
+	char				*token;
+	int					index;
+
+	token = next_token(&line);
+	index = 0;
+	while (index < 4)
+	{
+		if (strcmp(token, directions[index]) == 0)
+		{
+			if (data->is_set[dir_index[index]])
+			{
+				printf("%s texture path already set.\n", directions[index]);
+				return (-1);
+			}
+			data->is_set[dir_index[index]] = true;
+			return (parse_texture_path(&line, data, directions[index]));
+		}
+		index++;
+	}
+	return (parse_details2(token, &line, data));
 }
 
 int	parse_map_line(char *line, t_cub_data *data)
@@ -159,7 +165,7 @@ int	parse_map_line(char *line, t_cub_data *data)
 	return (0);
 }
 
-int		parse_line2(char *line, t_cub_data *data)
+int	parse_line2(char *line, t_cub_data *data)
 {
 	int		result;
 
@@ -170,7 +176,7 @@ int		parse_line2(char *line, t_cub_data *data)
 	return (result);
 }
 
-int		parse_line(char *line, t_cub_data *data)
+int	parse_line(char *line, t_cub_data *data)
 {
 	char	*temp;
 
@@ -191,7 +197,7 @@ int		parse_line(char *line, t_cub_data *data)
 	return (parse_line2(line, data));
 }
 
-int process_buffer(char *buffer, t_cub_data *data)
+int	process_buffer(char *buffer, t_cub_data *data)
 {
 	char	*line;
 	char	*end;
@@ -211,7 +217,7 @@ int process_buffer(char *buffer, t_cub_data *data)
 	return (0);
 }
 
-int parse_cub_file(const char *file_path, t_cub_data *data)
+int	parse_cub_file(const char *file_path, t_cub_data *data)
 {
 	char		buffer[BUFFER_SIZE + 1];
 	ssize_t		bytes_read;
@@ -225,7 +231,6 @@ int parse_cub_file(const char *file_path, t_cub_data *data)
 		perror("Error opening file");
 		return (1);
 	}
-
 	bytes_read = read(fd, buffer, BUFFER_SIZE);
 	while (bytes_read > 0)
 	{
