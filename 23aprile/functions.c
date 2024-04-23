@@ -81,15 +81,21 @@ int parse_texture_path(char **line, t_cub_data *data, const char *direction)
 int parse_color_component(char **line)
 {
     char *number = next_token(line);
+
+
     int value = atoi(number);
-    if (value < 0 || value > 255) {
+
+
+    if (value < 0 || value > 255)
+	{
         printf("Error: Color component %d out of range.\n", value);
         return -1;
     }
     return value;
 }
 
-int convert_rgb_to_int(int r, int g, int b) {
+int convert_rgb_to_int(int r, int g, int b)
+{
     return (r << 16) | (g << 8) | b;
 }
 
@@ -116,26 +122,37 @@ int parse_color(char **line, int *color)
 // Dispatcher function to parse line details
 int parse_details(char *line, t_cub_data *data)
 {
-    static const char *directions[] = {"NO", "SO", "WE", "EA"};
-    char *token = next_token(&line);
-    for (int i = 0; i < 4; i++)
-	{
+    static const char	*directions[] = {"NO", "SO", "WE", "EA"};
+    char *token;
+    int result;
+
+    token = next_token(&line);
+    int i = 0;
+    while (i < 4)
+    {
         if (strcmp(token, directions[i]) == 0)
-		{
-            return parse_texture_path(&line, data, directions[i]);
+        {
+            result = parse_texture_path(&line, data, directions[i]);
+            return (result);
         }
+        i++;
     }
+
     if (strcmp(token, "F") == 0)
-	{
-        return parse_color(&line, &data->floor_color);
+    {
+        result = parse_color(&line, &data->floor_color);
+        return (result);
     }
-	else if (strcmp(token, "C") == 0)
-	{
-        return parse_color(&line, &data->ceiling_color);
+    else if (strcmp(token, "C") == 0)
+    {
+        result = parse_color(&line, &data->ceiling_color);
+        return (result);
     }
+
     printf("Error: Unrecognized line format.\n");
-    return -1;
+    return (-1);
 }
+
 
 
 int	parse_map_line(char *line, t_cub_data *data)
@@ -206,16 +223,19 @@ int process_buffer(char *buffer, t_cub_data *data)
 {
     char *line = buffer;
     char *end;
-    while ((end = strchr(line, '\n')) != NULL) {
+    while ((end = strchr(line, '\n')) != NULL)
+	{
         *end = '\0'; // Null-terminate the current line
-        if (parse_line(line, data) != 0) {
+        if (parse_line(line, data) != 0)
+		{
             return 1; // Error occurred while parsing line
         }
         line = end + 1; // Move to the start of the next line
     }
     
     // Process any remaining text after the last newline
-    if (*line != '\0' && parse_line(line, data) != 0) {
+    if (*line != '\0' && parse_line(line, data) != 0)
+	{
         return 1; // Error occurred while parsing the last line
     }
     
@@ -225,7 +245,8 @@ int process_buffer(char *buffer, t_cub_data *data)
 int parse_cub_file(const char *file_path, t_cub_data *data)
 {
     int fd = open(file_path, O_RDONLY);
-    if (fd == -1) {
+    if (fd == -1)
+	{
         perror("Error opening file");
         return 1;
     }
@@ -234,7 +255,8 @@ int parse_cub_file(const char *file_path, t_cub_data *data)
     ssize_t bytes_read;
     int status = 0;
 
-    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0) {
+    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
+	{
         buffer[bytes_read] = '\0'; // Ensure null-terminated
         status = process_buffer(buffer, data); // Process the current buffer
         if (status) break; // Break if there was an error
@@ -289,24 +311,10 @@ int	validate_starting_points(t_cub_data *data)
 }
 
 
-bool	validate_map_encapsulation(t_cub_data *data)
-{
-	int i;
-	int line_length;
-	int j;
 
-	i = 1;
-	// Start from second line and end before last line
-	while (i < data->map_height - 1)
-	{
-		line_length = strlen(data->map[i]);
-		j = 1;
-		// Check from second char to second last char
-		while (j < line_length - 1)
-		{
-			if (data->map[i][j] == '0')
-			{
-				// Ensure '0' is not adjacent to space or tab
+bool is_properly_encapsulated(t_cub_data *data, int i, int j)
+{
+    // Ensure '0' is not adjacent to space or tab
 				if ((data->map[i][j - 1] == ' ' ||
 					data->map[i][j - 1] == '\t' ||
 					data->map[i][j + 1] == ' ' ||
@@ -315,52 +323,88 @@ bool	validate_map_encapsulation(t_cub_data *data)
 					data->map[i - 1][j] == '\t' ||
 					data->map[i + 1][j] == ' ' ||
 					data->map[i + 1][j] == '\t'))
-				{
-					printf("Error:0 near space/tab at (%d, %d).\n", i, j);
-					return (false);
-				}
-			}
-			j++;
-		}
-		i++;
-	}
-	return (true);
+    {
+        printf("Error: '0' near space/tab at (%d, %d).\n", i, j);
+        return false;
+    }
+    return true;
+}
+
+bool validate_map_encapsulation(t_cub_data *data)
+{
+    int i = 1;
+    int line_length;
+    int j;
+
+    // Start from second line and end before last line
+    while (i < data->map_height - 1)
+    {
+        line_length = strlen(data->map[i]);
+        j = 1;
+        // Check from second char to second last char
+        while (j < line_length - 1)
+        {
+            if (data->map[i][j] == '0')
+            {
+                if (!is_properly_encapsulated(data, i, j))
+                {
+                    return false;
+                }
+            }
+            j++;
+        }
+        i++;
+    }
+    return true;
 }
 
 
 
+
+
+
+
+
+bool is_starting_point_enclosed(t_cub_data *data, int i, int j)
+{
+    int line_length = strlen(data->map[i]);
+    // Check if it's not on the boundary to prevent accessing out of bounds
+    if (i > 0 && i < data->map_height - 1 && j > 0 && j < line_length - 1)
+	{
+        if (data->map[i - 1][j] == '1' && data->map[i + 1][j] == '1' &&
+            data->map[i][j - 1] == '1' && data->map[i][j + 1] == '1')
+			{
+            printf("Error: Starting point '%c' at (%d, %d) is fully enclosed by walls.\n", data->map[i][j], i, j);
+            return true; // Enclosed
+        }
+    }
+    return false; // Not enclosed
+}
+
 bool validate_starting_point_enclosure(t_cub_data *data)
 {
-	int	 i;
-	int	 line_length;
-	int	 j;
-	char	c;
+    int i = 0;
+    int j;
+    int line_length;
+    char c;
 
-	 i = 0;
-	while (i < data->map_height)
+    while (i < data->map_height)
 	{
-		line_length = strlen(data->map[i]);
-		j = 0;
-		while (j < line_length)
+        line_length = strlen(data->map[i]);
+        j = 0;
+        while (j < line_length)
 		{
-			c = data->map[i][j];
-			if (strchr("NSEW", c))
+            c = data->map[i][j];
+            if (strchr("NSEW", c))
 			{
-				if (i > 0 && i < data->map_height - 1 && j > 0 && j < line_length - 1)
-				{
-					if (data->map[i - 1][j] == '1' && data->map[i + 1][j] == '1' &&
-						data->map[i][j - 1] == '1' && data->map[i][j + 1] == '1')
-					{
-						printf("Error: Starting point '%c' at (%d, %d) is fully enclosed by walls.\n", c, i, j);
-						return (false);
-					}
-				}
-			}
-			j++;
-		}
-		i++;
-	}
-	return (true);
+                if (is_starting_point_enclosed(data, i, j))
+                    return false; // Stop checking if any starting point is enclosed
+            }
+            j++;
+        }
+        i++;
+    }
+    return true; // All starting points checked and valid
 }
 
 bool is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_length)
@@ -376,17 +420,22 @@ bool is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_l
 }
 
 
-bool check_zero_adjacency(t_cub_data *data) {
+bool check_zero_adjacency(t_cub_data *data)
+{
     int i = 0;
     int j;
     int line_length;
 
-    while (i < data->map_height) {
+    while (i < data->map_height)
+	{
         line_length = strlen(data->map[i]);
         j = 0;
-        while (j < line_length) {
-            if (data->map[i][j] == '0') {
-                if (is_zero_adjacent_to_space_or_tab(data, i, j, line_length)) {
+        while (j < line_length)
+		{
+            if (data->map[i][j] == '0')
+			{
+                if (is_zero_adjacent_to_space_or_tab(data, i, j, line_length))
+				{
                     printf("Error: '0' adjacent to space or tab at (%d, %d).\n", i, j);
                     return false;
                 }

@@ -1,36 +1,68 @@
-int parse_texture_path(char **line, t_cub_data *data, const char *direction)
+bool	validate_map_encapsulation(t_cub_data *data)
 {
-    char *path = next_token(line);
-    if (*path == '\0') {
-        printf("Error: Texture path is empty.\n");
-        return -1;
-    }
+	int i;
+	int line_length;
+	int j;
 
-    int index = get_texture_index(direction);
-    if (index == -1) {
-        printf("Error: Invalid direction.\n");
-        return -1;
-    }
-
-    free(data->texture_paths[index]);
-    data->texture_paths[index] = strdup(path);
-    return 0;
+	i = 1;
+	// Start from second line and end before last line
+	while (i < data->map_height - 1)
+	{
+		line_length = strlen(data->map[i]);
+		j = 1;
+		// Check from second char to second last char
+		while (j < line_length - 1)
+		{
+			if (data->map[i][j] == '0')
+			{
+				// Ensure '0' is not adjacent to space or tab
+				if ((data->map[i][j - 1] == ' ' ||
+					data->map[i][j - 1] == '\t' ||
+					data->map[i][j + 1] == ' ' ||
+					data->map[i][j + 1] == '\t') ||
+					(data->map[i - 1][j] == ' ' ||
+					data->map[i - 1][j] == '\t' ||
+					data->map[i + 1][j] == ' ' ||
+					data->map[i + 1][j] == '\t'))
+				{
+					printf("Error:0 near space/tab at (%d, %d).\n", i, j);
+					return (false);
+				}
+			}
+			j++;
+		}
+		i++;
+	}
+	return (true);
 }
 
-int assign_texture_path(char **line, t_cub_data *data, const char *direction) {
-    char *path = next_token(line);
-    if (*path == '\0') {
-        printf("Error: Texture path is empty.\n");
-        return -1;
-    }
 
-    int index = get_texture_index(direction);
-    if (index == -1) {
-        printf("Error: Invalid direction.\n");
-        return -1;
+bool is_properly_encapsulated(t_cub_data *data, int i, int j)
+{
+    // Ensure '0' is not adjacent to space or tab
+				if ((data->map[i][j - 1] == ' ' ||
+					data->map[i][j - 1] == '\t' ||
+					data->map[i][j + 1] == ' ' ||
+					data->map[i][j + 1] == '\t') ||
+					(data->map[i - 1][j] == ' ' ||
+					data->map[i - 1][j] == '\t' ||
+					data->map[i + 1][j] == ' ' ||
+					data->map[i + 1][j] == '\t'))
+    {
+        printf("Error: '0' near space/tab at (%d, %d).\n", i, j);
+        return false;
     }
-
-    free(data->texture_paths[index]);
-    data->texture_paths[index] = strdup(path);
-    return 0;
+    return true;
 }
+
+
+
+
+				if ((data->map[i][j - 1] == ' ' ||
+					data->map[i][j - 1] == '\t' ||
+					data->map[i][j + 1] == ' ' ||
+					data->map[i][j + 1] == '\t') ||
+					(data->map[i - 1][j] == ' ' ||
+					data->map[i - 1][j] == '\t' ||
+					data->map[i + 1][j] == ' ' ||
+					data->map[i + 1][j] == '\t'))
