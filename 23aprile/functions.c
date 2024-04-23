@@ -16,34 +16,86 @@ char	*next_token(char **str)
 	return (token);
 }
 
-int parse_details(char *line, t_cub_data *data)
-{
-	static const char *directions[] = {"NO", "SO", "WE", "EA"};
-	char *token = next_token(&line);
 
-	for (int i = 0; i < 4; i++)
-	{
-		if (strcmp(token, directions[i]) == 0)
-		{
-			char *path = next_token(&line);
-			if (*path == '\0') return -1;
-			free(data->texture_paths[i]);
-			data->texture_paths[i] = strdup(path);
-			return (0);
-		}
-	}
-
-	if (strcmp(token, "F") == 0 || strcmp(token, "C") == 0)
-	{
-		int *color = (token[0] == 'F') ? &data->floor_color : &data->ceiling_color;
-		int r, g, b;
-		sscanf(line, "%d,%d,%d", &r, &g, &b);
-		if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255) return -1;
-		*color = (r << 16) | (g << 8) | b;
-		return (0);
-	}
-	return (-1);
+//whatthefuck
+// Function to parse texture paths
+int parse_texture_path(char **line, t_cub_data *data, const char *direction) {
+    char *path = next_token(line);
+    if (*path == '\0') {
+        printf("Error: Texture path is empty.\n");
+        return -1;
+    }
+    int index;
+    if (direction[0] == 'N')
+        index = NORTH;
+    else if (direction[0] == 'S')
+        index = SOUTH;
+    else if (direction[0] == 'W')
+        index = WEST;
+    else if (direction[0] == 'E')
+        index = EAST;
+    else {
+        printf("Error: Invalid direction.\n");
+        return -1;
+    }
+    free(data->texture_paths[index]);
+    data->texture_paths[index] = strdup(path);
+    return 0;
 }
+
+// Function to parse color values
+int parse_color(char **line, int *color) {
+    int r, g, b;
+    char *number;
+
+    // Parse red component
+    number = next_token(line);
+    r = atoi(number);
+    if (r < 0 || r > 255) {
+        printf("Error: Red color component out of range.\n");
+        return -1;
+    }
+
+    // Parse green component
+    number = next_token(line);
+    g = atoi(number);
+    if (g < 0 || g > 255) {
+        printf("Error: Green color component out of range.\n");
+        return -1;
+    }
+
+    // Parse blue component
+    number = next_token(line);
+    b = atoi(number);
+    if (b < 0 || b > 255) {
+        printf("Error: Blue color component out of range.\n");
+        return -1;
+    }
+
+    *color = (r << 16) | (g << 8) | b;
+    return 0;
+}
+
+// Dispatcher function to parse line details
+int parse_details(char *line, t_cub_data *data) {
+    static const char *directions[] = {"NO", "SO", "WE", "EA"};
+    char *token = next_token(&line);
+    for (int i = 0; i < 4; i++) {
+        if (strcmp(token, directions[i]) == 0) {
+            return parse_texture_path(&line, data, directions[i]);
+        }
+    }
+
+    if (strcmp(token, "F") == 0) {
+        return parse_color(&line, &data->floor_color);
+    } else if (strcmp(token, "C") == 0) {
+        return parse_color(&line, &data->ceiling_color);
+    }
+
+    printf("Error: Unrecognized line format.\n");
+    return -1;
+}
+
 
 int	parse_map_line(char *line, t_cub_data *data)
 {
@@ -166,18 +218,17 @@ int parse_cub_file(const char *file_path, t_cub_data *data)
 
 	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
 	{
-		buffer[bytes_read] = '\0'; // Ensure null-terminated
+		buffer[bytes_read] = '\0';
 		while ((end = strchr(line, '\n')) != NULL) {
 			*end = '\0';
 			if (parse_line(line, data) != 0)
 			{
-				status = 1; // Indicate error
+				status = 1;
 				break;
 			}
 			line = end + 1;
 		}
-		if (status) break; // Exit if error occurred
-
+		if (status) break;
 		// Process any remaining text after the last newline
 		if (*line != '\0' && parse_line(line, data) != 0) {
 			status = 1;
