@@ -95,36 +95,43 @@ int parse_color(char **line, int *color)
 int parse_details(char *line, t_cub_data *data) {
     static const char *directions[] = {"NO", "SO", "WE", "EA"};
     static const int dir_index[] = {NORTH, SOUTH, WEST, EAST}; // Indexes for NO, SO, WE, EA
-    char *token = next_token(&line);
-    int i;
+    char *token;
+    int index = 0;
+    //int result;
 
-    // Check for texture paths
-    for (i = 0; i < 4; i++) {
-        if (strcmp(token, directions[i]) == 0) {
-            if (data->is_set[dir_index[i]]) {
-                printf("Error: %s texture path already set.\n", directions[i]);
+    token = next_token(&line);
+
+    while (index < 4) {
+        if (strcmp(token, directions[index]) == 0) {
+            if (data->is_set[dir_index[index]]) {
+                printf("Error: %s texture path already set.\n", directions[index]);
                 return -1;
             }
-            data->is_set[dir_index[i]] = true;
-            return parse_texture_path(&line, data, directions[i]);
+            data->is_set[dir_index[index]] = true;
+            return parse_texture_path(&line, data, directions[index]);
         }
+        index++;
     }
 
-    // Check for floor or ceiling color
-    if (strcmp(token, "F") == 0 || strcmp(token, "C") == 0) {
-        int index = (token[0] == 'F' ? 4 : 5); // Index for F or C
-        if (data->is_set[index]) {
-            printf("Error: %s color already set.\n", token[0] == 'F' ? "Floor" : "Ceiling");
+    if (strcmp(token, "F") == 0) {
+        if (data->is_set[4]) {
+            printf("Error: Floor color already set.\n");
             return -1;
         }
-        data->is_set[index] = true;
-        return parse_color(&line, (token[0] == 'F') ? &data->floor_color : &data->ceiling_color);
+        data->is_set[4] = true;
+        return parse_color(&line, &data->floor_color);
+    } else if (strcmp(token, "C") == 0) {
+        if (data->is_set[5]) {
+            printf("Error: Ceiling color already set.\n");
+            return -1;
+        }
+        data->is_set[5] = true;
+        return parse_color(&line, &data->ceiling_color);
     }
 
     printf("Error: Unrecognized line format.\n");
     return -1;
 }
-
 
 
 int	parse_map_line(char *line, t_cub_data *data)
