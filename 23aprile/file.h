@@ -17,6 +17,7 @@ enum { NORTH, SOUTH, WEST, EAST };
 typedef struct s_cub_data
 {
     char *texture_paths[4]; // Textures for North, South, West, East
+    bool is_set[6]; // Tracks whether NO, SO, WE, EA, F, C are set
     int floor_color;        // RGB color for floor
     int ceiling_color;      // RGB color for ceiling
     char **map;             // Array of strings for the map

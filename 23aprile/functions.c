@@ -18,31 +18,6 @@ char	*next_token(char **str)
 
 
 //whatthefuck
-// Function to parse texture paths
-/*
-int parse_texture_path(char **line, t_cub_data *data, const char *direction) {
-    char *path = next_token(line);
-    if (*path == '\0') {
-        printf("Error: Texture path is empty.\n");
-        return -1;
-    }
-    int index;
-    if (direction[0] == 'N')
-        index = NORTH;
-    else if (direction[0] == 'S')
-        index = SOUTH;
-    else if (direction[0] == 'W')
-        index = WEST;
-    else if (direction[0] == 'E')
-        index = EAST;
-    else {
-        printf("Error: Invalid direction.\n");
-        return -1;
-    }
-    free(data->texture_paths[index]);
-    data->texture_paths[index] = strdup(path);
-    return 0;
-}*/
 
 int get_texture_index(const char *direction)
 {
@@ -117,35 +92,37 @@ int parse_color(char **line, int *color)
     return 0;
 }
 // Dispatcher function to parse line details
-int parse_details(char *line, t_cub_data *data)
-{
-    static const char	*directions[] = {"NO", "SO", "WE", "EA"};
-    char *token;
-    int result;
+int parse_details(char *line, t_cub_data *data) {
+    static const char *directions[] = {"NO", "SO", "WE", "EA"};
+    static const int dir_index[] = {NORTH, SOUTH, WEST, EAST}; // Indexes for NO, SO, WE, EA
+    char *token = next_token(&line);
+    int i;
 
-    token = next_token(&line);
-    int i = 0;
-    while (i < 4)
-    {
-        if (strcmp(token, directions[i]) == 0)
-        {
-            result = parse_texture_path(&line, data, directions[i]);
-            return (result);
+    // Check for texture paths
+    for (i = 0; i < 4; i++) {
+        if (strcmp(token, directions[i]) == 0) {
+            if (data->is_set[dir_index[i]]) {
+                printf("Error: %s texture path already set.\n", directions[i]);
+                return -1;
+            }
+            data->is_set[dir_index[i]] = true;
+            return parse_texture_path(&line, data, directions[i]);
         }
-        i++;
     }
-    if (strcmp(token, "F") == 0)
-    {
-        result = parse_color(&line, &data->floor_color);
-        return (result);
+
+    // Check for floor or ceiling color
+    if (strcmp(token, "F") == 0 || strcmp(token, "C") == 0) {
+        int index = (token[0] == 'F' ? 4 : 5); // Index for F or C
+        if (data->is_set[index]) {
+            printf("Error: %s color already set.\n", token[0] == 'F' ? "Floor" : "Ceiling");
+            return -1;
+        }
+        data->is_set[index] = true;
+        return parse_color(&line, (token[0] == 'F') ? &data->floor_color : &data->ceiling_color);
     }
-    else if (strcmp(token, "C") == 0)
-    {
-        result = parse_color(&line, &data->ceiling_color);
-        return (result);
-    }
+
     printf("Error: Unrecognized line format.\n");
-    return (-1);
+    return -1;
 }
 
 

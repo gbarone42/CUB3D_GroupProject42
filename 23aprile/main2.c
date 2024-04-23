@@ -57,9 +57,11 @@ bool parse_cub_wrapper(char *filename, t_cub_data *data)
 	return true;
 }
 
-void init_cub3(t_cub_data *data)
-{
-	memset(data, 0, sizeof(*data));
+void init_cub3(t_cub_data *data) {
+    memset(data, 0, sizeof(*data));
+    for (int i = 0; i < 6; i++) {
+        data->is_set[i] = false;
+    }
 }
 
 
