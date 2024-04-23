@@ -1,11 +1,36 @@
-bool is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_length)
+int parse_texture_path(char **line, t_cub_data *data, const char *direction)
 {
-	return ((j > 0 && (data->map[i][j - 1] == ' '
-			|| data->map[i][j - 1] == '\t'))
-			|| (j < line_length - 1 && (data->map[i][j + 1]
-			== ' ' || data->map[i][j + 1] == '\t'))
-			|| (i > 0 && (data->map[i - 1][j] == ' '
-			|| data->map[i - 1][j] == '\t'))
-			|| (i < data->map_height - 1 && (data->map[i + 1][j] == ' '
-			|| data->map[i + 1][j] == '\t')));
+    char *path = next_token(line);
+    if (*path == '\0') {
+        printf("Error: Texture path is empty.\n");
+        return -1;
+    }
+
+    int index = get_texture_index(direction);
+    if (index == -1) {
+        printf("Error: Invalid direction.\n");
+        return -1;
+    }
+
+    free(data->texture_paths[index]);
+    data->texture_paths[index] = strdup(path);
+    return 0;
+}
+
+int assign_texture_path(char **line, t_cub_data *data, const char *direction) {
+    char *path = next_token(line);
+    if (*path == '\0') {
+        printf("Error: Texture path is empty.\n");
+        return -1;
+    }
+
+    int index = get_texture_index(direction);
+    if (index == -1) {
+        printf("Error: Invalid direction.\n");
+        return -1;
+    }
+
+    free(data->texture_paths[index]);
+    data->texture_paths[index] = strdup(path);
+    return 0;
 }

@@ -19,6 +19,7 @@ char	*next_token(char **str)
 
 //whatthefuck
 // Function to parse texture paths
+/*
 int parse_texture_path(char **line, t_cub_data *data, const char *direction) {
     char *path = next_token(line);
     if (*path == '\0') {
@@ -41,57 +42,97 @@ int parse_texture_path(char **line, t_cub_data *data, const char *direction) {
     free(data->texture_paths[index]);
     data->texture_paths[index] = strdup(path);
     return 0;
+}*/
+
+int get_texture_index(const char *direction)
+{
+    if (direction[0] == 'N')
+		return NORTH;
+    if (direction[0] == 'S')
+		return SOUTH;
+    if (direction[0] == 'W')
+		return WEST;
+    if (direction[0] == 'E')
+		return EAST;
+    return -1; // Return -1 if direction is invalid
 }
+int parse_texture_path(char **line, t_cub_data *data, const char *direction)
+{
+    char *path = next_token(line);
 
-// Function to parse color values
-int parse_color(char **line, int *color) {
-    int r, g, b;
-    char *number;
 
-    // Parse red component
-    number = next_token(line);
-    r = atoi(number);
-    if (r < 0 || r > 255) {
-        printf("Error: Red color component out of range.\n");
+    if (*path == '\0')
+	{
+        printf("Error: Texture path is empty.\n");
         return -1;
     }
-
-    // Parse green component
-    number = next_token(line);
-    g = atoi(number);
-    if (g < 0 || g > 255) {
-        printf("Error: Green color component out of range.\n");
+    int index = get_texture_index(direction);
+    if (index == -1)
+	{
+        printf("Error: Invalid direction.\n");
         return -1;
     }
-
-    // Parse blue component
-    number = next_token(line);
-    b = atoi(number);
-    if (b < 0 || b > 255) {
-        printf("Error: Blue color component out of range.\n");
-        return -1;
-    }
-
-    *color = (r << 16) | (g << 8) | b;
+    free(data->texture_paths[index]);
+    data->texture_paths[index] = strdup(path);
     return 0;
 }
 
+// Function to parse color values
+int parse_color_component(char **line)
+{
+    char *number = next_token(line);
+    int value = atoi(number);
+    if (value < 0 || value > 255) {
+        printf("Error: Color component %d out of range.\n", value);
+        return -1;
+    }
+    return value;
+}
+
+int convert_rgb_to_int(int r, int g, int b) {
+    return (r << 16) | (g << 8) | b;
+}
+
+int parse_color(char **line, int *color)
+{
+    int r;
+	int g;
+	int b;
+
+    // Parse each component
+    r = parse_color_component(line);
+    if (r == -1) return -1;  // Stop if there's an error
+
+    g = parse_color_component(line);
+    if (g == -1) return -1;  // Stop if there's an error
+
+    b = parse_color_component(line);
+    if (b == -1) return -1;  // Stop if there's an error
+
+    // Combine components into one integer and assign it to color
+    *color = convert_rgb_to_int(r, g, b);
+    return 0;
+}
 // Dispatcher function to parse line details
-int parse_details(char *line, t_cub_data *data) {
+int parse_details(char *line, t_cub_data *data)
+{
     static const char *directions[] = {"NO", "SO", "WE", "EA"};
     char *token = next_token(&line);
-    for (int i = 0; i < 4; i++) {
-        if (strcmp(token, directions[i]) == 0) {
+    for (int i = 0; i < 4; i++)
+	{
+        if (strcmp(token, directions[i]) == 0)
+		{
             return parse_texture_path(&line, data, directions[i]);
         }
     }
-
-    if (strcmp(token, "F") == 0) {
+    if (strcmp(token, "F") == 0)
+	{
         return parse_color(&line, &data->floor_color);
-    } else if (strcmp(token, "C") == 0) {
+    }
+	else if (strcmp(token, "C") == 0)
+	{
         return parse_color(&line, &data->ceiling_color);
     }
-
     printf("Error: Unrecognized line format.\n");
     return -1;
 }
@@ -161,7 +202,8 @@ int parse_line(char *line, t_cub_data *data)
 	return parse_line2(line, data);
 }
 
-int process_buffer(char *buffer, t_cub_data *data) {
+int process_buffer(char *buffer, t_cub_data *data)
+{
     char *line = buffer;
     char *end;
     while ((end = strchr(line, '\n')) != NULL) {
@@ -180,7 +222,8 @@ int process_buffer(char *buffer, t_cub_data *data) {
     return 0; // No errors, all lines processed successfully
 }
 
-int parse_cub_file(const char *file_path, t_cub_data *data) {
+int parse_cub_file(const char *file_path, t_cub_data *data)
+{
     int fd = open(file_path, O_RDONLY);
     if (fd == -1) {
         perror("Error opening file");
@@ -355,21 +398,27 @@ bool check_zero_adjacency(t_cub_data *data) {
     return true;
 }
 
-bool is_zero_on_boundary(int map_height, int line_length, int i, int j) {
-    return (i == 0 || i == map_height - 1 || j == 0 || j == line_length - 1);
+bool	is_zero_on_boundary(int map_height, int line_length, int i, int j)
+{
+	return (i == 0 || i == map_height - 1 || j == 0 || j == line_length - 1);
 }
 
-bool check_map_boundaries(t_cub_data *data) {
+bool check_map_boundaries(t_cub_data *data)
+{
     int i = 0;
     int j;
     int line_length;
 
-    while (i < data->map_height) {
+    while (i < data->map_height)
+	{
         line_length = strlen(data->map[i]);
         j = 0;
-        while (j < line_length) {
-            if (data->map[i][j] == '0') {
-                if (is_zero_on_boundary(data->map_height, line_length, i, j)) {
+        while (j < line_length)
+		{
+            if (data->map[i][j] == '0')
+			{
+                if (is_zero_on_boundary(data->map_height, line_length, i, j))
+				{
                     printf("Error: '0' on map boundary at (%d, %d).\n", i, j);
                     return false;
                 }
