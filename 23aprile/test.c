@@ -1,5 +1,18 @@
-
-int convert_rgb_to_int(int r, int g, int b)
+int	process_buffer(char *buffer, t_cub_data *data)
 {
-    return ((r << 16) | (g << 8) | b);
+	char	*line;
+	char	*end;
+
+	end = strchr(line, '\n');
+	line = buffer;
+	while ((end = strchr(line, '\n')) != NULL)
+	{
+		*end = '\0';
+		if (parse_line(line, data) != 0)
+			return (1);
+		line = end + 1;
+	}
+	if (*line != '\0' && parse_line(line, data) != 0)
+		return (1);
+	return (0);
 }

@@ -36,7 +36,7 @@ int	parse_texture_path(char **line, t_cub_data *data, const char *direction)
 	char		*path;
 	int			index;
 
-    path = next_token(line);
+	path = next_token(line);
 	if (*path == '\0')
 	{
 		printf("Error: Texture path is empty.\n");
@@ -95,13 +95,14 @@ int	parse_color(char **line, int *color)
 
 /**/
 // Dispatcher function to parse line details
-int	parse_details(char *line, t_cub_data *data) {
+int	parse_details(char *line, t_cub_data *data)
+{
 	static const char *directions[] = {"NO", "SO", "WE", "EA"};
-	static const int dir_index[] = {NORTH, SOUTH, WEST, EAST}; // Indexes for NO, SO, WE, EA
+	static const int dir_index[] = {NORTH, SOUTH, WEST, EAST};
 	char *token;
 	int index;
 
-    index = 0;
+	index = 0;
 	token = next_token(&line);
 	while (index < 4) {
 		if (strcmp(token, directions[index]) == 0) {
@@ -115,19 +116,19 @@ int	parse_details(char *line, t_cub_data *data) {
 		index++;
 	}
 	if (strcmp(token, "F") == 0)
-    {
+	{
 		if (data->is_set[4])
-        {
+		{
 			printf("Error: Floor color already set.\n");
 			return (-1);
 		}
 		data->is_set[4] = true;
 		return (parse_color(&line, &data->floor_color));
 	}
-    else if (strcmp(token, "C") == 0)
-    {
+	else if (strcmp(token, "C") == 0)
+	{
 		if (data->is_set[5])
-        {
+		{
 			printf("Error: Ceiling color already set.\n");
 			return (-1);
 		}
@@ -171,8 +172,9 @@ int		parse_line2(char *line, t_cub_data *data)
 
 int		parse_line(char *line, t_cub_data *data)
 {
-	char	*temp = line;
+	char	*temp;
 
+	temp = line;
 	while (*temp)
 	{
 		if (!strchr(" \t\n", *temp))
@@ -189,17 +191,20 @@ int		parse_line(char *line, t_cub_data *data)
 	return (parse_line2(line, data));
 }
 
-int	process_buffer(char *buffer, t_cub_data *data)
+int process_buffer(char *buffer, t_cub_data *data)
 {
-	char	*line = buffer;
+	char	*line;
 	char	*end;
 
-	while ((end = strchr(line, '\n')) != NULL)
+	line = buffer;
+	end = strchr(line, '\n');
+	while (end != NULL)
 	{
 		*end = '\0';
 		if (parse_line(line, data) != 0)
 			return (1);
 		line = end + 1;
+		end = strchr(line, '\n');
 	}
 	if (*line != '\0' && parse_line(line, data) != 0)
 		return (1);
@@ -220,18 +225,23 @@ int parse_cub_file(const char *file_path, t_cub_data *data)
 		perror("Error opening file");
 		return (1);
 	}
-	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
+
+	bytes_read = read(fd, buffer, BUFFER_SIZE);
+	while (bytes_read > 0)
 	{
 		buffer[bytes_read] = '\0';
 		status = process_buffer(buffer, data);
-		if (status)
+		if (status != 0)
+		{
 			break ;
+		}
+		bytes_read = read(fd, buffer, BUFFER_SIZE);
 	}
 	close(fd);
 	return (status);
 }
 
-int	check_starting_points(t_cub_data *data, const char *valid_starts, int *start_count)
+int	checkstartpoint(t_cub_data *data, const char *vld_starts, int *start_count)
 {
 	int		i;
 	int		j;
@@ -242,7 +252,7 @@ int	check_starting_points(t_cub_data *data, const char *valid_starts, int *start
 		j = 0;
 		while (data->map[i][j])
 		{
-			if (strchr(valid_starts, data->map[i][j]))
+			if (strchr(vld_starts, data->map[i][j]))
 			{
 				(*start_count)++;
 				if (*start_count > 1)
@@ -265,7 +275,7 @@ int	validate_starting_points(t_cub_data *data)
 
 	valid_starts = "NSEW";
 	start_count = 0;
-	if (!check_starting_points(data, valid_starts, &start_count))
+	if (!checkstartpoint(data, valid_starts, &start_count))
 		return (0);
 	if (start_count == 0)
 	{
@@ -343,7 +353,7 @@ bool	validate_starting_point_enclosure(t_cub_data *data)
 	int		line_length;
 	char	c;
 
-    i = 0;
+	i = 0;
 	while (i < data->map_height)
 	{
 		line_length = strlen(data->map[i]);
@@ -363,7 +373,7 @@ bool	validate_starting_point_enclosure(t_cub_data *data)
 	return (true);
 }
 
-bool	is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_length)
+bool	is_0_near_spaceortab(t_cub_data *data, int i, int j, int line_length)
 {
 	return ((j > 0 && (data->map[i][j - 1] == ' '
 			|| data->map[i][j - 1] == '\t'))
@@ -381,7 +391,7 @@ bool	check_zero_adjacency(t_cub_data *data)
 	int		j;
 	int		line_length;
 
-    i = 0;
+	i = 0;
 	while (i < data->map_height)
 	{
 		line_length = strlen(data->map[i]);
@@ -390,7 +400,7 @@ bool	check_zero_adjacency(t_cub_data *data)
 		{
 			if (data->map[i][j] == '0')
 			{
-				if (is_zero_adjacent_to_space_or_tab(data, i, j, line_length))
+				if (is_0_near_spaceortab(data, i, j, line_length))
 				{
 					printf("Error: 0 near space or tab at (%d, %d).\n", i, j);
 					return (false);
@@ -414,7 +424,7 @@ bool	check_map_boundaries(t_cub_data *data)
 	int		j;
 	int		line_length;
 
-    i = 0;
+	i = 0;
 	while (i < data->map_height)
 	{
 		line_length = strlen(data->map[i]);

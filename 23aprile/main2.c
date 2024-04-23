@@ -60,7 +60,6 @@ bool	parse_cub_wrapper(char *filename, t_cub_data *data)
 void	init_cub3(t_cub_data *data)
 {
 	memset(data, 0, sizeof(*data));
-	// Manually setting each is_set index to false
 	data->is_set[0] = false;
 	data->is_set[1] = false;
 	data->is_set[2] = false;
