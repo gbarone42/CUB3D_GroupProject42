@@ -206,36 +206,44 @@ int	validate_starting_points(t_cub_data *data)
 	return (1);
 }
 
-int parse_cub_file(const char *file_path, t_cub_data *data)
-{
-	int fd = open(file_path, O_RDONLY);
-	if (fd == -1) return perror("Error opening file"), 1;
+int process_buffer(char *buffer, t_cub_data *data) {
+    char *line = buffer;
+    char *end;
+    while ((end = strchr(line, '\n')) != NULL) {
+        *end = '\0'; // Null-terminate the current line
+        if (parse_line(line, data) != 0) {
+            return 1; // Error occurred while parsing line
+        }
+        line = end + 1; // Move to the start of the next line
+    }
+    
+    // Process any remaining text after the last newline
+    if (*line != '\0' && parse_line(line, data) != 0) {
+        return 1; // Error occurred while parsing the last line
+    }
+    
+    return 0; // No errors, all lines processed successfully
+}
 
-	char buffer[BUFFER_SIZE + 1];
-	ssize_t bytes_read;
-	char *line = buffer, *end;
-	int status = 0;
+int parse_cub_file(const char *file_path, t_cub_data *data) {
+    int fd = open(file_path, O_RDONLY);
+    if (fd == -1) {
+        perror("Error opening file");
+        return 1;
+    }
 
-	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
-	{
-		buffer[bytes_read] = '\0';
-		while ((end = strchr(line, '\n')) != NULL) {
-			*end = '\0';
-			if (parse_line(line, data) != 0)
-			{
-				status = 1;
-				break;
-			}
-			line = end + 1;
-		}
-		if (status) break;
-		// Process any remaining text after the last newline
-		if (*line != '\0' && parse_line(line, data) != 0) {
-			status = 1;
-		}
-	}
-	close(fd);
-	return (status);
+    char buffer[BUFFER_SIZE + 1];
+    ssize_t bytes_read;
+    int status = 0;
+
+    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0) {
+        buffer[bytes_read] = '\0'; // Ensure null-terminated
+        status = process_buffer(buffer, data); // Process the current buffer
+        if (status) break; // Break if there was an error
+    }
+
+    close(fd); // Ensure file is always closed
+    return status; // Return the status to the caller
 }
 
 void	print_map_shape(t_cub_data *data)
