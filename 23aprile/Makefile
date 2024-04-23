@@ -9,7 +9,7 @@ INCLUDES = -I.
 TARGET = cub3d
 
 # Define source files
-SRC = main.c
+SRC = main.c main2.c functions.c
 
 # Define object files
 OBJ = $(SRC:.c=.o)
