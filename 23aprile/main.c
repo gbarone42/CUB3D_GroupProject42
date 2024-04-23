@@ -14,8 +14,8 @@ int main(int argc, char **argv)
 	if (!validate_starting_points_wrapper(&data))
 		return 1;
 
-	if (!validate_map_encapsulation_wrapper(&data))
-		return 1;
+	//if (!validate_map_encapsulation_wrapper(&data))
+	//	return 1;
 
 	if (!validate_starting_point_enclosure_wrapper(&data))
 		return 1;

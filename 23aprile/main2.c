@@ -2,11 +2,14 @@
 
 bool validate_mapborder_and_characters(t_cub_data *data)
 {
-	if (!validate_mapborder_encapsulation(data))
+    if (!check_map_boundaries(data))
 	{
-		printf("Map border encapsulation validation failed.\n");
-		return false;
-	}
+        return false;
+    }
+    if (!check_zero_adjacency(data))
+	{
+        return false;
+    }
 	if (!validate_map_characters(data))
 	{
 		return false;
@@ -24,6 +27,7 @@ bool validate_starting_point_enclosure_wrapper(t_cub_data *data)
 	return true;
 }
 
+/*
 bool validate_map_encapsulation_wrapper(t_cub_data *data)
 {
 	if (!validate_map_encapsulation(data))
@@ -32,7 +36,7 @@ bool validate_map_encapsulation_wrapper(t_cub_data *data)
 		return false;
 	}
 	return true;
-}
+}*/
 
 bool validate_starting_points_wrapper(t_cub_data *data)
 {

@@ -161,6 +161,45 @@ int parse_line(char *line, t_cub_data *data)
 	return parse_line2(line, data);
 }
 
+int process_buffer(char *buffer, t_cub_data *data) {
+    char *line = buffer;
+    char *end;
+    while ((end = strchr(line, '\n')) != NULL) {
+        *end = '\0'; // Null-terminate the current line
+        if (parse_line(line, data) != 0) {
+            return 1; // Error occurred while parsing line
+        }
+        line = end + 1; // Move to the start of the next line
+    }
+    
+    // Process any remaining text after the last newline
+    if (*line != '\0' && parse_line(line, data) != 0) {
+        return 1; // Error occurred while parsing the last line
+    }
+    
+    return 0; // No errors, all lines processed successfully
+}
+
+int parse_cub_file(const char *file_path, t_cub_data *data) {
+    int fd = open(file_path, O_RDONLY);
+    if (fd == -1) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    char buffer[BUFFER_SIZE + 1];
+    ssize_t bytes_read;
+    int status = 0;
+
+    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0) {
+        buffer[bytes_read] = '\0'; // Ensure null-terminated
+        status = process_buffer(buffer, data); // Process the current buffer
+        if (status) break; // Break if there was an error
+    }
+
+    close(fd); // Ensure file is always closed
+    return status; // Return the status to the caller
+}
 
 int	check_starting_points(t_cub_data *data, const char *valid_starts, int *start_count)
 {
@@ -206,59 +245,6 @@ int	validate_starting_points(t_cub_data *data)
 	return (1);
 }
 
-int process_buffer(char *buffer, t_cub_data *data) {
-    char *line = buffer;
-    char *end;
-    while ((end = strchr(line, '\n')) != NULL) {
-        *end = '\0'; // Null-terminate the current line
-        if (parse_line(line, data) != 0) {
-            return 1; // Error occurred while parsing line
-        }
-        line = end + 1; // Move to the start of the next line
-    }
-    
-    // Process any remaining text after the last newline
-    if (*line != '\0' && parse_line(line, data) != 0) {
-        return 1; // Error occurred while parsing the last line
-    }
-    
-    return 0; // No errors, all lines processed successfully
-}
-
-int parse_cub_file(const char *file_path, t_cub_data *data) {
-    int fd = open(file_path, O_RDONLY);
-    if (fd == -1) {
-        perror("Error opening file");
-        return 1;
-    }
-
-    char buffer[BUFFER_SIZE + 1];
-    ssize_t bytes_read;
-    int status = 0;
-
-    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0) {
-        buffer[bytes_read] = '\0'; // Ensure null-terminated
-        status = process_buffer(buffer, data); // Process the current buffer
-        if (status) break; // Break if there was an error
-    }
-
-    close(fd); // Ensure file is always closed
-    return status; // Return the status to the caller
-}
-
-void	print_map_shape(t_cub_data *data)
-{
-	int i;
-
-	i = 0;
-	printf("Map Shape:\n");
-	while (i < data->map_height)
-	{
-		printf("%s\n", data->map[i]);
-		i++;
-	}
-}
-
 
 bool	validate_map_encapsulation(t_cub_data *data)
 {
@@ -298,45 +284,7 @@ bool	validate_map_encapsulation(t_cub_data *data)
 	return (true);
 }
 
-bool validate_mapborder_encapsulation(t_cub_data *data)
-{
-	int i;
-	int j;
-	int line_length;
 
-	i = 0;
-	while (i < data->map_height)
-	{
-		line_length = strlen(data->map[i]);
-		j = 0;
-		while (j < line_length)
-		{
-			if (data->map[i][j] == '0')
-			{
-				if (i == 0 || i == data->map_height - 1 || j == 0 || j == line_length - 1)
-				{
-					printf("Error: '0' on map boundary at (%d, %d).\n", i, j);
-					return (false);
-				}
-				if ((j > 0 && (data->map[i][j -1] == ' '
-						|| data->map[i][j -1] == '\t'))
-						||(j < line_length - 1 && (data->map[i][j+1] == ' '
-						|| data->map[i][j +1] == '\t'))
-						||(i > 0 && (data->map[i-1][j] == ' '
-						|| data->map[i -1][j] == '\t'))
-						||(i < data->map_height - 1 && (data->map[i+1][j] == ' '
-						|| data->map[i +1][j] == '\t')))
-				{
-					printf("Error: '0' adjacent to space or tab at (%d, %d).\n", i, j);
-					return (false);
-				}
-			}
-			j++;
-		}
-		i++;
-	}
-	return (true);
-}
 
 bool validate_starting_point_enclosure(t_cub_data *data)
 {
@@ -372,6 +320,68 @@ bool validate_starting_point_enclosure(t_cub_data *data)
 	return (true);
 }
 
+bool is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_length)
+{
+	return ((j > 0 && (data->map[i][j - 1] == ' '
+			|| data->map[i][j - 1] == '\t'))
+			|| (j < line_length - 1 && (data->map[i][j + 1]
+			== ' ' || data->map[i][j + 1] == '\t'))
+			|| (i > 0 && (data->map[i - 1][j] == ' '
+			|| data->map[i - 1][j] == '\t'))
+			|| (i < data->map_height - 1 && (data->map[i + 1][j] == ' '
+			|| data->map[i + 1][j] == '\t')));
+}
+
+
+bool check_zero_adjacency(t_cub_data *data) {
+    int i = 0;
+    int j;
+    int line_length;
+
+    while (i < data->map_height) {
+        line_length = strlen(data->map[i]);
+        j = 0;
+        while (j < line_length) {
+            if (data->map[i][j] == '0') {
+                if (is_zero_adjacent_to_space_or_tab(data, i, j, line_length)) {
+                    printf("Error: '0' adjacent to space or tab at (%d, %d).\n", i, j);
+                    return false;
+                }
+            }
+            j++;
+        }
+        i++;
+    }
+    return true;
+}
+
+bool is_zero_on_boundary(int map_height, int line_length, int i, int j) {
+    return (i == 0 || i == map_height - 1 || j == 0 || j == line_length - 1);
+}
+
+bool check_map_boundaries(t_cub_data *data) {
+    int i = 0;
+    int j;
+    int line_length;
+
+    while (i < data->map_height) {
+        line_length = strlen(data->map[i]);
+        j = 0;
+        while (j < line_length) {
+            if (data->map[i][j] == '0') {
+                if (is_zero_on_boundary(data->map_height, line_length, i, j)) {
+                    printf("Error: '0' on map boundary at (%d, %d).\n", i, j);
+                    return false;
+                }
+            }
+            j++;
+        }
+        i++;
+    }
+    return true;
+}
+
+
 bool	validate_map_characters(t_cub_data *data)
 {
 	int			i;
@@ -390,7 +400,7 @@ bool	validate_map_characters(t_cub_data *data)
 			if (!strchr(valid_chars, data->map[i][j]))
 			{
 				printf("Error: Invalid character '%c'row %d, col %d.\n",
-						data->map[i][j], i, j);
+							data->map[i][j], i, j);
 				return (false);
 			}
 			j++;
@@ -398,4 +408,17 @@ bool	validate_map_characters(t_cub_data *data)
 		i++;
 	}
 	return (true);
+}
+
+void	print_map_shape(t_cub_data *data)
+{
+	int	i;
+
+	i = 0;
+	printf("Map Shape:\n");
+	while (i < data->map_height)
+	{
+		printf("%s\n", data->map[i]);
+		i++;
+	}
 }

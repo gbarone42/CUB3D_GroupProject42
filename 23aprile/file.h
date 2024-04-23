@@ -37,7 +37,11 @@ bool parse_cub_wrapper(char *filename, t_cub_data *data);
 char *next_token(char **str);
 
 // Validation functions
-bool validate_map_encapsulation(t_cub_data *data);
+
+bool check_map_boundaries(t_cub_data *data);
+
+bool check_zero_adjacency(t_cub_data *data);
+
 bool validate_map_encapsulation_wrapper(t_cub_data *data);
 int validate_starting_points(t_cub_data *data);
 bool validate_starting_points_wrapper(t_cub_data *data);
