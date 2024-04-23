@@ -108,13 +108,10 @@ int parse_color(char **line, int *color)
     // Parse each component
     r = parse_color_component(line);
     if (r == -1) return -1;  // Stop if there's an error
-
     g = parse_color_component(line);
     if (g == -1) return -1;  // Stop if there's an error
-
     b = parse_color_component(line);
     if (b == -1) return -1;  // Stop if there's an error
-
     // Combine components into one integer and assign it to color
     *color = convert_rgb_to_int(r, g, b);
     return 0;
@@ -137,7 +134,6 @@ int parse_details(char *line, t_cub_data *data)
         }
         i++;
     }
-
     if (strcmp(token, "F") == 0)
     {
         result = parse_color(&line, &data->floor_color);
@@ -148,7 +144,6 @@ int parse_details(char *line, t_cub_data *data)
         result = parse_color(&line, &data->ceiling_color);
         return (result);
     }
-
     printf("Error: Unrecognized line format.\n");
     return (-1);
 }
@@ -181,13 +176,9 @@ int parse_line2(char *line, t_cub_data *data)
 
 	// Processing the line based on its content
 	if (strchr("NSWEFC", line[0]) != NULL)
-	{
 		result = parse_details(line, data);
-	}
 	else
-	{
 		result = parse_map_line(line, data);
-	}
 	return result;
 }
 
@@ -198,12 +189,9 @@ int parse_line(char *line, t_cub_data *data)
 	while (*temp)
 	{
 		if (!strchr(" \t\n", *temp))
-		{ 
 			break; // Break loop on finding non-whitespace
-		}
 		temp++;
 	}
-
 	// Check for empty lines within the map
 	if (*temp == '\0' && data->map_height > 0)
 	{
@@ -212,9 +200,7 @@ int parse_line(char *line, t_cub_data *data)
 	}
 	// Return early for completely empty lines
 	if (*line == '\0')
-	{
 		return 0;
-	}
 	// If line is not empty, call the next part of processing
 	return parse_line2(line, data);
 }
@@ -227,41 +213,32 @@ int process_buffer(char *buffer, t_cub_data *data)
 	{
         *end = '\0'; // Null-terminate the current line
         if (parse_line(line, data) != 0)
-		{
-            return 1; // Error occurred while parsing line
-        }
+            return 1; // Error occurred while parsing li
         line = end + 1; // Move to the start of the next line
     }
-    
     // Process any remaining text after the last newline
     if (*line != '\0' && parse_line(line, data) != 0)
-	{
         return 1; // Error occurred while parsing the last line
-    }
-    
     return 0; // No errors, all lines processed successfully
 }
 
 int parse_cub_file(const char *file_path, t_cub_data *data)
 {
+	char buffer[BUFFER_SIZE + 1];
+    ssize_t bytes_read;
+    int status = 0;
     int fd = open(file_path, O_RDONLY);
     if (fd == -1)
 	{
         perror("Error opening file");
         return 1;
     }
-
-    char buffer[BUFFER_SIZE + 1];
-    ssize_t bytes_read;
-    int status = 0;
-
     while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
 	{
         buffer[bytes_read] = '\0'; // Ensure null-terminated
         status = process_buffer(buffer, data); // Process the current buffer
         if (status) break; // Break if there was an error
     }
-
     close(fd); // Ensure file is always closed
     return status; // Return the status to the caller
 }
@@ -357,13 +334,6 @@ bool validate_map_encapsulation(t_cub_data *data)
     }
     return true;
 }
-
-
-
-
-
-
-
 
 bool is_starting_point_enclosed(t_cub_data *data, int i, int j)
 {
