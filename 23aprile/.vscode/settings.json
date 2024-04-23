@@ -1,5 +1,7 @@
 {
 	"files.associations": {
-		"file.h": "c"
+		"file.h": "c",
+		"chrono": "c",
+		"variant": "c"
 	}
 }

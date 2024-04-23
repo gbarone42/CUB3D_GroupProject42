@@ -1,30 +1,30 @@
 #include "file.h"
 
-bool validate_mapborder_and_characters(t_cub_data *data)
+bool	validate_mapborder_and_characters(t_cub_data *data)
 {
-    if (!check_map_boundaries(data))
+	if (!check_map_boundaries(data))
 	{
-        return false;
-    }
-    if (!check_zero_adjacency(data))
+		return (false);
+	}
+	if (!check_zero_adjacency(data))
 	{
-        return false;
-    }
+		return (false);
+	}
 	if (!validate_map_characters(data))
 	{
-		return false;
+		return (false);
 	}
-	return true;
+	return (true);
 }
 
-bool validate_starting_point_enclosure_wrapper(t_cub_data *data)
+bool	validate_starting_point_enclosure_wrapper(t_cub_data *data)
 {
 	if (!validate_starting_point_enclosure(data))
 	{
 		printf("Starting point enclosure validation failed.\n");
-		return false;
+		return (false);
 	}
-	return true;
+	return (true);
 }
 
 /*
@@ -38,40 +38,44 @@ bool validate_map_encapsulation_wrapper(t_cub_data *data)
 	return true;
 }*/
 
-bool validate_starting_points_wrapper(t_cub_data *data)
+bool	validate_starting_points_wrapper(t_cub_data *data)
 {
 	if (!validate_starting_points(data))
 	{
-		return false;
+		return (false);
 	}
-	return true;
+	return (true);
 }
 
-bool parse_cub_wrapper(char *filename, t_cub_data *data)
+bool	parse_cub_wrapper(char *filename, t_cub_data *data)
 {
 	if (parse_cub_file(filename, data) != 0)
 	{
 		printf("Failed to parse the .cub file.\n");
-		return false;
+		return (false);
 	}
-	return true;
+	return (true);
 }
 
-void init_cub3(t_cub_data *data) {
-    memset(data, 0, sizeof(*data));
-    for (int i = 0; i < 6; i++) {
-        data->is_set[i] = false;
-    }
+void	init_cub3(t_cub_data *data)
+{
+	memset(data, 0, sizeof(*data));
+	// Manually setting each is_set index to false
+	data->is_set[0] = false;
+	data->is_set[1] = false;
+	data->is_set[2] = false;
+	data->is_set[3] = false;
+	data->is_set[4] = false;
+	data->is_set[5] = false;
 }
 
-
-bool initialize_and_check_args(int argc, char **argv, t_cub_data *data)
+bool	initialize_and_check_args(int argc, char **argv, t_cub_data *data)
 {
 	if (argc != 2)
 	{
 		printf("Usage: %s <path to .cub file>\n", argv[0]);
-		return false;
+		return (false);
 	}
 	init_cub3(data);
-	return true;
+	return (true);
 }

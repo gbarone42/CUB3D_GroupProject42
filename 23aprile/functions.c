@@ -16,123 +16,127 @@ char	*next_token(char **str)
 	return (token);
 }
 
-
 //whatthefuck
 
-int get_texture_index(const char *direction)
+int	get_texture_index(const char *direction)
 {
-    if (direction[0] == 'N')
-		return NORTH;
-    if (direction[0] == 'S')
-		return SOUTH;
-    if (direction[0] == 'W')
-		return WEST;
-    if (direction[0] == 'E')
-		return EAST;
-    return -1; // Return -1 if direction is invalid
+	if (direction[0] == 'N')
+		return (NORTH);
+	if (direction[0] == 'S')
+		return (SOUTH);
+	if (direction[0] == 'W')
+		return (WEST);
+	if (direction[0] == 'E')
+		return (EAST);
+	return (-1);
 }
-int parse_texture_path(char **line, t_cub_data *data, const char *direction)
+
+int	parse_texture_path(char **line, t_cub_data *data, const char *direction)
 {
-    char *path = next_token(line);
+	char		*path;
+	int			index;
 
-
-    if (*path == '\0')
+    path = next_token(line);
+	if (*path == '\0')
 	{
-        printf("Error: Texture path is empty.\n");
-        return -1;
-    }
-    int index = get_texture_index(direction);
-    if (index == -1)
+		printf("Error: Texture path is empty.\n");
+		return (-1);
+	}
+	index = get_texture_index(direction);
+	if (index == -1)
 	{
-        printf("Error: Invalid direction.\n");
-        return -1;
-    }
-    free(data->texture_paths[index]);
-    data->texture_paths[index] = strdup(path);
-    return 0;
+		printf("Error: Invalid direction.\n");
+		return (-1);
+	}
+	free(data->texture_paths[index]);
+	data->texture_paths[index] = strdup(path);
+	return (0);
 }
 
 // Function to parse color values
-int parse_color_component(char **line)
+int	parse_color_component(char **line)
 {
-    char *number = next_token(line);
+	char	*number;
+	int		value;
 
-
-    int value = atoi(number);
-
-
-    if (value < 0 || value > 255)
+	number = next_token(line);
+	value = atoi(number);
+	if (value < 0 || value > 255)
 	{
-        printf("Error: Color component %d out of range.\n", value);
-        return -1;
-    }
-    return value;
+		printf("Error: Color component %d out of range.\n", value);
+		return (-1);
+	}
+	return (value);
 }
 
-int convert_rgb_to_int(int r, int g, int b)
+int	convert_rgb_to_int(int r, int g, int b)
 {
-    return (r << 16) | (g << 8) | b;
+	return ((r << 16) | (g << 8) | b);
 }
 
-int parse_color(char **line, int *color)
+int	parse_color(char **line, int *color)
 {
-    int r;
-	int g;
-	int b;
+	int		r;
+	int		g;
+	int		b;
 
-    // Parse each component
-    r = parse_color_component(line);
-    if (r == -1) return -1;  // Stop if there's an error
-    g = parse_color_component(line);
-    if (g == -1) return -1;  // Stop if there's an error
-    b = parse_color_component(line);
-    if (b == -1) return -1;  // Stop if there's an error
-    // Combine components into one integer and assign it to color
-    *color = convert_rgb_to_int(r, g, b);
-    return 0;
+	r = parse_color_component(line);
+	if (r == -1)
+		return (-1);
+	g = parse_color_component(line);
+	if (g == -1)
+		return (-1);
+	b = parse_color_component(line);
+	if (b == -1)
+		return (-1);
+	*color = convert_rgb_to_int(r, g, b);
+	return (0);
 }
+
+/**/
 // Dispatcher function to parse line details
-int parse_details(char *line, t_cub_data *data) {
-    static const char *directions[] = {"NO", "SO", "WE", "EA"};
-    static const int dir_index[] = {NORTH, SOUTH, WEST, EAST}; // Indexes for NO, SO, WE, EA
-    char *token;
-    int index = 0;
-    //int result;
+int	parse_details(char *line, t_cub_data *data) {
+	static const char *directions[] = {"NO", "SO", "WE", "EA"};
+	static const int dir_index[] = {NORTH, SOUTH, WEST, EAST}; // Indexes for NO, SO, WE, EA
+	char *token;
+	int index;
 
-    token = next_token(&line);
-
-    while (index < 4) {
-        if (strcmp(token, directions[index]) == 0) {
-            if (data->is_set[dir_index[index]]) {
-                printf("Error: %s texture path already set.\n", directions[index]);
-                return -1;
-            }
-            data->is_set[dir_index[index]] = true;
-            return parse_texture_path(&line, data, directions[index]);
-        }
-        index++;
-    }
-
-    if (strcmp(token, "F") == 0) {
-        if (data->is_set[4]) {
-            printf("Error: Floor color already set.\n");
-            return -1;
-        }
-        data->is_set[4] = true;
-        return parse_color(&line, &data->floor_color);
-    } else if (strcmp(token, "C") == 0) {
-        if (data->is_set[5]) {
-            printf("Error: Ceiling color already set.\n");
-            return -1;
-        }
-        data->is_set[5] = true;
-        return parse_color(&line, &data->ceiling_color);
-    }
-
-    printf("Error: Unrecognized line format.\n");
-    return -1;
+    index = 0;
+	token = next_token(&line);
+	while (index < 4) {
+		if (strcmp(token, directions[index]) == 0) {
+			if (data->is_set[dir_index[index]]) {
+				printf("Error: %s texture path already set.\n", directions[index]);
+				return (-1);
+			}
+			data->is_set[dir_index[index]] = true;
+			return (parse_texture_path(&line, data, directions[index]));
+		}
+		index++;
+	}
+	if (strcmp(token, "F") == 0)
+    {
+		if (data->is_set[4])
+        {
+			printf("Error: Floor color already set.\n");
+			return (-1);
+		}
+		data->is_set[4] = true;
+		return (parse_color(&line, &data->floor_color));
+	}
+    else if (strcmp(token, "C") == 0)
+    {
+		if (data->is_set[5])
+        {
+			printf("Error: Ceiling color already set.\n");
+			return (-1);
+		}
+		data->is_set[5] = true;
+		return (parse_color(&line, &data->ceiling_color));
+	}
+	printf("Error: Unrecognized line format.\n");
+	return (-1);
 }
-
 
 int	parse_map_line(char *line, t_cub_data *data)
 {
@@ -154,83 +158,83 @@ int	parse_map_line(char *line, t_cub_data *data)
 	return (0);
 }
 
-int parse_line2(char *line, t_cub_data *data)
+int		parse_line2(char *line, t_cub_data *data)
 {
-	int result;
+	int		result;
 
-	// Processing the line based on its content
 	if (strchr("NSWEFC", line[0]) != NULL)
 		result = parse_details(line, data);
 	else
 		result = parse_map_line(line, data);
-	return result;
+	return (result);
 }
 
-int parse_line(char *line, t_cub_data *data)
+int		parse_line(char *line, t_cub_data *data)
 {
-	char *temp = line;
+	char	*temp = line;
 
 	while (*temp)
 	{
 		if (!strchr(" \t\n", *temp))
-			break; // Break loop on finding non-whitespace
+			break ;
 		temp++;
 	}
-	// Check for empty lines within the map
 	if (*temp == '\0' && data->map_height > 0)
 	{
 		printf("Error: Map contains an empty line.\n");
 		return (-1);
 	}
-	// Return early for completely empty lines
 	if (*line == '\0')
-		return 0;
-	// If line is not empty, call the next part of processing
-	return parse_line2(line, data);
+		return (0);
+	return (parse_line2(line, data));
 }
 
-int process_buffer(char *buffer, t_cub_data *data)
+int	process_buffer(char *buffer, t_cub_data *data)
 {
-    char *line = buffer;
-    char *end;
-    while ((end = strchr(line, '\n')) != NULL)
+	char	*line = buffer;
+	char	*end;
+
+	while ((end = strchr(line, '\n')) != NULL)
 	{
-        *end = '\0'; // Null-terminate the current line
-        if (parse_line(line, data) != 0)
-            return 1; // Error occurred while parsing li
-        line = end + 1; // Move to the start of the next line
-    }
-    // Process any remaining text after the last newline
-    if (*line != '\0' && parse_line(line, data) != 0)
-        return 1; // Error occurred while parsing the last line
-    return 0; // No errors, all lines processed successfully
+		*end = '\0';
+		if (parse_line(line, data) != 0)
+			return (1);
+		line = end + 1;
+	}
+	if (*line != '\0' && parse_line(line, data) != 0)
+		return (1);
+	return (0);
 }
 
 int parse_cub_file(const char *file_path, t_cub_data *data)
 {
-	char buffer[BUFFER_SIZE + 1];
-    ssize_t bytes_read;
-    int status = 0;
-    int fd = open(file_path, O_RDONLY);
-    if (fd == -1)
+	char		buffer[BUFFER_SIZE + 1];
+	ssize_t		bytes_read;
+	int			status;
+	int			fd;
+
+	status = 0;
+	fd = open(file_path, O_RDONLY);
+	if (fd == -1)
 	{
-        perror("Error opening file");
-        return 1;
-    }
-    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
+		perror("Error opening file");
+		return (1);
+	}
+	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
 	{
-        buffer[bytes_read] = '\0'; // Ensure null-terminated
-        status = process_buffer(buffer, data); // Process the current buffer
-        if (status) break; // Break if there was an error
-    }
-    close(fd); // Ensure file is always closed
-    return status; // Return the status to the caller
+		buffer[bytes_read] = '\0';
+		status = process_buffer(buffer, data);
+		if (status)
+			break ;
+	}
+	close(fd);
+	return (status);
 }
 
 int	check_starting_points(t_cub_data *data, const char *valid_starts, int *start_count)
 {
-	int i;
-	int j;
+	int		i;
+	int		j;
 
 	i = 0;
 	while (i < data->map_height)
@@ -257,7 +261,7 @@ int	check_starting_points(t_cub_data *data, const char *valid_starts, int *start
 int	validate_starting_points(t_cub_data *data)
 {
 	char	*valid_starts;
-	int	 start_count;
+	int		start_count;
 
 	valid_starts = "NSEW";
 	start_count = 0;
@@ -271,97 +275,95 @@ int	validate_starting_points(t_cub_data *data)
 	return (1);
 }
 
-
-
-bool is_properly_encapsulated(t_cub_data *data, int i, int j)
+bool	is_properly_encapsulated(t_cub_data *data, int i, int j)
 {
-    // Ensure '0' is not adjacent to space or tab
-				if ((data->map[i][j - 1] == ' ' ||
-					data->map[i][j - 1] == '\t' ||
-					data->map[i][j + 1] == ' ' ||
-					data->map[i][j + 1] == '\t') ||
-					(data->map[i - 1][j] == ' ' ||
-					data->map[i - 1][j] == '\t' ||
-					data->map[i + 1][j] == ' ' ||
-					data->map[i + 1][j] == '\t'))
-    {
-        printf("Error: '0' near space/tab at (%d, %d).\n", i, j);
-        return false;
-    }
-    return true;
-}
-
-bool validate_map_encapsulation(t_cub_data *data)
-{
-    int i = 1;
-    int line_length;
-    int j;
-
-    // Start from second line and end before last line
-    while (i < data->map_height - 1)
-    {
-        line_length = strlen(data->map[i]);
-        j = 1;
-        // Check from second char to second last char
-        while (j < line_length - 1)
-        {
-            if (data->map[i][j] == '0')
-            {
-                if (!is_properly_encapsulated(data, i, j))
-                {
-                    return false;
-                }
-            }
-            j++;
-        }
-        i++;
-    }
-    return true;
-}
-
-bool is_starting_point_enclosed(t_cub_data *data, int i, int j)
-{
-    int line_length = strlen(data->map[i]);
-    // Check if it's not on the boundary to prevent accessing out of bounds
-    if (i > 0 && i < data->map_height - 1 && j > 0 && j < line_length - 1)
+	if ((data->map[i][j - 1] == ' '
+		|| data->map[i][j - 1] == '\t' ||
+		data->map[i][j + 1] == ' ' ||
+		data->map[i][j + 1] == '\t') ||
+		(data->map[i - 1][j] == ' ' ||
+		data->map[i - 1][j] == '\t' ||
+		data->map[i + 1][j] == ' ' ||
+		data->map[i + 1][j] == '\t'))
 	{
-        if (data->map[i - 1][j] == '1' && data->map[i + 1][j] == '1' &&
-            data->map[i][j - 1] == '1' && data->map[i][j + 1] == '1')
-			{
-            printf("Error: Starting point '%c' at (%d, %d) is fully enclosed by walls.\n", data->map[i][j], i, j);
-            return true; // Enclosed
-        }
-    }
-    return false; // Not enclosed
+		printf("Error: '0' near space/tab at (%d, %d).\n", i, j);
+		return (false);
+	}
+	return (true);
 }
 
-bool validate_starting_point_enclosure(t_cub_data *data)
+bool	validate_map_encapsulation(t_cub_data *data)
 {
-    int i = 0;
-    int j;
-    int line_length;
-    char c;
+	int		i;
+	int		line_length;
+	int		j;
 
-    while (i < data->map_height)
+	i = 1;
+	while (i < data->map_height - 1)
 	{
-        line_length = strlen(data->map[i]);
-        j = 0;
-        while (j < line_length)
+		line_length = strlen(data->map[i]);
+		j = 1;
+		while (j < line_length - 1)
 		{
-            c = data->map[i][j];
-            if (strchr("NSEW", c))
+			if (data->map[i][j] == '0')
 			{
-                if (is_starting_point_enclosed(data, i, j))
-                    return false; // Stop checking if any starting point is enclosed
-            }
-            j++;
-        }
-        i++;
-    }
-    return true; // All starting points checked and valid
+				if (!is_properly_encapsulated(data, i, j))
+				{
+					return (false);
+				}
+			}
+			j++;
+		}
+		i++;
+	}
+	return (true);
 }
 
-bool is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_length)
+bool	is_starting_point_enclosed(t_cub_data *data, int i, int j)
+{
+	int		line_length;
+
+	line_length = strlen(data->map[i]);
+	if (i > 0 && i < data->map_height - 1 && j > 0 && j < line_length - 1)
+	{
+		if (data->map[i - 1][j] == '1' && data->map[i + 1][j] == '1' &&
+			data->map[i][j - 1] == '1' && data->map[i][j + 1] == '1')
+		{
+			printf("'%c' (%d, %d) around walls.\n", data->map[i][j], i, j);
+			return (true);
+		}
+	}
+	return (false);
+}
+
+bool	validate_starting_point_enclosure(t_cub_data *data)
+{
+	int		i;
+	int		j;
+	int		line_length;
+	char	c;
+
+    i = 0;
+	while (i < data->map_height)
+	{
+		line_length = strlen(data->map[i]);
+		j = 0;
+		while (j < line_length)
+		{
+			c = data->map[i][j];
+			if (strchr("NSEW", c))
+			{
+				if (is_starting_point_enclosed(data, i, j))
+					return (false);
+			}
+			j++;
+		}
+		i++;
+	}
+	return (true);
+}
+
+bool	is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_length)
 {
 	return ((j > 0 && (data->map[i][j - 1] == ' '
 			|| data->map[i][j - 1] == '\t'))
@@ -373,32 +375,32 @@ bool is_zero_adjacent_to_space_or_tab(t_cub_data *data, int i, int j, int line_l
 			|| data->map[i + 1][j] == '\t')));
 }
 
-
-bool check_zero_adjacency(t_cub_data *data)
+bool	check_zero_adjacency(t_cub_data *data)
 {
-    int i = 0;
-    int j;
-    int line_length;
+	int		i;
+	int		j;
+	int		line_length;
 
-    while (i < data->map_height)
+    i = 0;
+	while (i < data->map_height)
 	{
-        line_length = strlen(data->map[i]);
-        j = 0;
-        while (j < line_length)
+		line_length = strlen(data->map[i]);
+		j = 0;
+		while (j < line_length)
 		{
-            if (data->map[i][j] == '0')
+			if (data->map[i][j] == '0')
 			{
-                if (is_zero_adjacent_to_space_or_tab(data, i, j, line_length))
+				if (is_zero_adjacent_to_space_or_tab(data, i, j, line_length))
 				{
-                    printf("Error: '0' adjacent to space or tab at (%d, %d).\n", i, j);
-                    return false;
-                }
-            }
-            j++;
-        }
-        i++;
-    }
-    return true;
+					printf("Error: 0 near space or tab at (%d, %d).\n", i, j);
+					return (false);
+				}
+			}
+			j++;
+		}
+		i++;
+	}
+	return (true);
 }
 
 bool	is_zero_on_boundary(int map_height, int line_length, int i, int j)
@@ -406,33 +408,33 @@ bool	is_zero_on_boundary(int map_height, int line_length, int i, int j)
 	return (i == 0 || i == map_height - 1 || j == 0 || j == line_length - 1);
 }
 
-bool check_map_boundaries(t_cub_data *data)
+bool	check_map_boundaries(t_cub_data *data)
 {
-    int i = 0;
-    int j;
-    int line_length;
+	int		i;
+	int		j;
+	int		line_length;
 
-    while (i < data->map_height)
+    i = 0;
+	while (i < data->map_height)
 	{
-        line_length = strlen(data->map[i]);
-        j = 0;
-        while (j < line_length)
+		line_length = strlen(data->map[i]);
+		j = 0;
+		while (j < line_length)
 		{
-            if (data->map[i][j] == '0')
+			if (data->map[i][j] == '0')
 			{
-                if (is_zero_on_boundary(data->map_height, line_length, i, j))
+				if (is_zero_on_boundary(data->map_height, line_length, i, j))
 				{
-                    printf("Error: '0' on map boundary at (%d, %d).\n", i, j);
-                    return false;
-                }
-            }
-            j++;
-        }
-        i++;
-    }
-    return true;
+					printf("Error: '0' on map boundary at (%d, %d).\n", i, j);
+					return (false);
+				}
+			}
+			j++;
+		}
+		i++;
+	}
+	return (true);
 }
-
 
 bool	validate_map_characters(t_cub_data *data)
 {
@@ -452,7 +454,7 @@ bool	validate_map_characters(t_cub_data *data)
 			if (!strchr(valid_chars, data->map[i][j]))
 			{
 				printf("Error: Invalid character '%c'row %d, col %d.\n",
-							data->map[i][j], i, j);
+					data->map[i][j], i, j);
 				return (false);
 			}
 			j++;
